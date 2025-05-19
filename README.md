@@ -1,1 +1,1 @@
-# adv_prog_final
+This is our final project for 정보프로그래밍심화
