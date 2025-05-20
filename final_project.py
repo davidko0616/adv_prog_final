@@ -68,6 +68,7 @@ for _, row in df.iterrows():
 
 st_folium(m, width=700, height=500)
 
+<<<<<<< HEAD
 
 st.subheader("이름으로 민원 검색")
 search_name = st.text_input("이름 또는 일부 글자를 입력하세요:")
@@ -77,3 +78,26 @@ if search_name:
         st.dataframe(filtered[["Date", "Name", "Civil Complaint", "Coordinate"]])
     else:
         st.info("해당 이름을 포함한 결과가 없습니다.")
+=======
+search_name = st.text_input("이름으로 검색하세요").strip().lower()
+
+if search_name:
+    filtered_df = df[df["Name"].str.lower().str.contains(search_name)]
+    if filtered_df.empty:
+        st.info("해당 이름이 포함된 신고자를 찾을 수 없습니다.")
+    else:
+        st.subheader("검색 결과")
+        for _, row in filtered_df.iterrows():
+            st.markdown(f"""
+            이름: {row['Name']}  
+            날짜: {row.get('Date', '정보 없음')}  
+            신고 내용: {row.get('Civil Complaint', '정보 없음')}  
+            좌표: {row.get('Coordinate', '정보 없음')}  
+            ---
+            """)
+else:
+    st.info("이름을 입력해 검색하세요.")
+
+    
+
+>>>>>>> 96cb925 (added search feature)
