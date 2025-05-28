@@ -67,3 +67,13 @@ for _, row in df.iterrows():
         st.warning(f"좌표 변환 실패: {row['Coordinate']} → {e}")
 
 st_folium(m, width=700, height=500)
+
+
+st.subheader("이름으로 민원 검색")
+search_name = st.text_input("이름 또는 일부 글자를 입력하세요:")
+if search_name:
+    filtered = df[df["Name"].str.contains(search_name, case=False, na=False)]
+    if not filtered.empty:
+        st.dataframe(filtered[["Date", "Name", "Civil Complaint", "Coordinate"]])
+    else:
+        st.info("해당 이름을 포함한 결과가 없습니다.")
