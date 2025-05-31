@@ -68,17 +68,6 @@ for _, row in df.iterrows():
 
 st_folium(m, width=700, height=500)
 
-<<<<<<< HEAD
-
-st.subheader("이름으로 민원 검색")
-search_name = st.text_input("이름 또는 일부 글자를 입력하세요:")
-if search_name:
-    filtered = df[df["Name"].str.contains(search_name, case=False, na=False)]
-    if not filtered.empty:
-        st.dataframe(filtered[["Date", "Name", "Civil Complaint", "Coordinate"]])
-    else:
-        st.info("해당 이름을 포함한 결과가 없습니다.")
-=======
 search_name = st.text_input("이름으로 검색하세요").strip().lower()
 
 if search_name:
@@ -97,7 +86,3 @@ if search_name:
             """)
 else:
     st.info("이름을 입력해 검색하세요.")
-
-    
-
->>>>>>> 96cb925 (added search feature)
