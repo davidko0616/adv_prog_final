@@ -86,3 +86,5 @@ if search_name:
             """)
 else:
     st.info("이름을 입력해 검색하세요.")
+
+print("check check")
