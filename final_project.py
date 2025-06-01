@@ -104,11 +104,25 @@ map_data = st_folium(m, width=700, height=500)
 clicked_coords = map_data.get("last_clicked") if map_data else None
 
 
-search_name = st.text_input("이름으로 검색하세요").strip().lower()
+df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
+
+col1, col2 = st.columns(2)
+with col1:
+    search_name = st.text_input("이름으로 검색").strip().lower()
+with col2:
+    search_date = st.date_input("날짜로 검색", value=None, key="date_search")
+
+search_date = pd.to_datetime(search_date) if search_date else None
+
+filtered_df = df.copy()
 if search_name:
-    filtered_df = df[df["Name"].str.lower().str.contains(search_name)]
+    filtered_df = filtered_df[filtered_df["Name"].str.lower().str.contains(search_name)]
+if search_date:
+    filtered_df = filtered_df[filtered_df["Date"].dt.date == search_date.date()]
+
+if search_name or search_date:
     if filtered_df.empty:
-        st.info("해당 이름이 포함된 신고자를 찾을 수 없습니다.")
+        st.warning("검색 조건에 해당하는 데이터가 없습니다.")
     else:
         st.subheader("검색 결과")
         for _, row in filtered_df.iterrows():
@@ -117,10 +131,11 @@ if search_name:
             날짜: {row.get('Date', '정보 없음')}  
             신고 내용: {row.get('Civil Complaint', '정보 없음')}  
             좌표: {row.get('Coordinate', '정보 없음')}  
-            ---
+            ---  
             """)
 else:
-    st.info("이름을 입력해 검색하세요.")
+    st.info("이름 또는 날짜 중 하나를 입력하여 검색하세요.")
+
 
 df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
 
@@ -138,7 +153,6 @@ if "Date" in df.columns:
     st.pyplot(plt)
 else:
     st.warning("날짜 정보가 누락되어 그래프를 표시할 수 없습니다.")
-
 
 df.dropna(subset=["Coordinate", "Name", "Civil Complaint"], inplace=True)
 st.dataframe(df)
