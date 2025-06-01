@@ -1,9 +1,11 @@
-import os
 import streamlit as st
 import pandas as pd
 import folium
-from datetime import date
+import os
 from streamlit_folium import st_folium
+import matplotlib.pyplot as plt
+import seaborn as sns
+from datetime import date
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -56,12 +58,10 @@ class Complaint:
         Content: {self.content}"""
 
 st.title("북한산 민원 신고 플랫폼")
+
 df = load_sheet_data()
 if df.empty:
     st.stop()
-
-df.dropna(subset=["Coordinate", "Name", "Civil Complaint"], inplace=True)
-st.dataframe(df)
 
 st.subheader("사당 위치를 클릭해서 민원 등록")
 map_center = [37.659845, 126.992394]
@@ -92,17 +92,17 @@ if st.button("신고하기"):
     else:
         st.warning("지도의 위치를 클릭하세요.")
 
-st.subheader("기존 민원 내용용용")
-temp_map = folium.Map(location=map_center, zoom_start=13)
 for _, row in df.iterrows():
     try:
-        lat, lon = map(float, row["coordinat"].strip().split(","))
+        lat, lon = map(float, row["Coordinate"].strip().split(","))
         popup = f"{row['Name']} - {row['Civil Complaint']}"
-        folium.Marker([lat, lon], popup=popup).add_to(temp_map)
-    except Exception:
-        continue
+        folium.Marker([lat, lon], popup=popup).add_to(m)
+    except Exception as e:
+        st.warning(f"좌표 변환 실패: {row['Coordinate']} → {e}")
 
-st_folium(temp_map, width=700, height=500)
+map_data = st_folium(m, width=700, height=500)
+clicked_coords = map_data.get("last_clicked") if map_data else None
+
 
 search_name = st.text_input("이름으로 검색하세요").strip().lower()
 if search_name:
@@ -119,3 +119,26 @@ if search_name:
             좌표: {row.get('Coordinate', '정보 없음')}  
             ---
             """)
+else:
+    st.info("이름을 입력해 검색하세요.")
+
+df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
+
+df = df.dropna(subset=["Date"])
+
+st.subheader("날짜별 민원 신고 건수")
+if "Date" in df.columns:
+    complaint_by_day = df["Date"].dt.date.value_counts().sort_index()
+    plt.figure(figsize=(10, 4))
+    sns.barplot(x=complaint_by_day.index.astype(str), y=complaint_by_day.values, color="salmon")
+    plt.xlabel("날짜")
+    plt.ylabel("민원 건수")
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    st.pyplot(plt)
+else:
+    st.warning("날짜 정보가 누락되어 그래프를 표시할 수 없습니다.")
+
+
+df.dropna(subset=["Coordinate", "Name", "Civil Complaint"], inplace=True)
+st.dataframe(df)
