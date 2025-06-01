@@ -51,9 +51,9 @@ class Complaint:
         self.submitted_date = submitted_date
 
     def __str__(self):
-        return f"""📌 Complaint by {self.author} on {self.submitted_date}:
-        🗺️ Location: {self.coordinates}
-        📝 Content: {self.content}"""
+        return f""" Complaint by {self.author} on {self.submitted_date}:
+        Location: {self.coordinates}
+        Content: {self.content}"""
 
 st.title("북한산 민원 신고 플랫폼")
 df = load_sheet_data()
