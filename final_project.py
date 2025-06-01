@@ -2,6 +2,7 @@ import os
 import streamlit as st
 import pandas as pd
 import folium
+from datetime import date
 from streamlit_folium import st_folium
 
 from google.auth.transport.requests import Request
@@ -11,7 +12,6 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets.readonly"]
-
 SPREADSHEET_ID = "1AKHY2-KTT7w16Ah-4S8a0CPVyFxYzoIjGUZIy9fJVTc"
 RANGE_NAME = "Sheet1"
 
@@ -30,8 +30,7 @@ def load_sheet_data():
     
     try:
         service = build("sheets", "v4", credentials=creds)
-        sheet = service.spreadsheets()
-        result = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range=RANGE_NAME).execute()
+        result = service.spreadsheets().values().get(spreadsheetId=SPREADSHEET_ID, range=RANGE_NAME).execute()
         values = result.get("values", [])
 
         if not values:
@@ -44,32 +43,68 @@ def load_sheet_data():
         st.error(f"Google Sheets API 오류: {err}")
         return pd.DataFrame()
 
+class Complaint:
+    def __init__(self, author, content, coordinates, submitted_date):
+        self.author = author
+        self.content = content
+        self.coordinates = coordinates
+        self.submitted_date = submitted_date
+
+    def __str__(self):
+        return f"""📌 Complaint by {self.author} on {self.submitted_date}:
+        🗺️ Location: {self.coordinates}
+        📝 Content: {self.content}"""
+
 st.title("북한산 민원 신고 플랫폼")
 df = load_sheet_data()
-
 if df.empty:
     st.stop()
 
 df.dropna(subset=["Coordinate", "Name", "Civil Complaint"], inplace=True)
-
-
 st.dataframe(df)
 
-m = folium.Map(location=[37.659845, 126.992394], zoom_start=13)
+st.subheader("사당 위치를 클릭해서 민원 등록")
+map_center = [37.659845, 126.992394]
+m = folium.Map(location=map_center, zoom_start=13)
 
 for _, row in df.iterrows():
     try:
-        coord = row["Coordinate"].strip()
-        lat, lon = map(float, coord.strip().split(","))
+        lat, lon = map(float, row["Coordinate"].strip().split(","))
         popup = f"{row['Name']} - {row['Civil Complaint']}"
         folium.Marker([lat, lon], popup=popup).add_to(m)
     except Exception as e:
         st.warning(f"좌표 변환 실패: {row['Coordinate']} → {e}")
 
-st_folium(m, width=700, height=500)
+map_data = st_folium(m, width=700, height=500)
+clicked_coords = map_data.get("last_clicked") if map_data else None
+
+st.subheader("민원 정보 입력")
+author = st.text_input("작성자")
+content = st.text_area("민원 내용")
+submitted_date = st.date_input("작성 날짜", value=date.today())
+
+if st.button("신고하기"):
+    if clicked_coords:
+        lat, lon = clicked_coords["lat"], clicked_coords["lng"]
+        complaint = Complaint(author, content, (lat, lon), submitted_date)
+        st.success("민원이 성공적으로 수집되었습니다!")
+        st.text(str(complaint))
+    else:
+        st.warning("지도의 위치를 클릭하세요.")
+
+st.subheader("기존 민원 내용용용")
+temp_map = folium.Map(location=map_center, zoom_start=13)
+for _, row in df.iterrows():
+    try:
+        lat, lon = map(float, row["coordinat"].strip().split(","))
+        popup = f"{row['Name']} - {row['Civil Complaint']}"
+        folium.Marker([lat, lon], popup=popup).add_to(temp_map)
+    except Exception:
+        continue
+
+st_folium(temp_map, width=700, height=500)
 
 search_name = st.text_input("이름으로 검색하세요").strip().lower()
-
 if search_name:
     filtered_df = df[df["Name"].str.lower().str.contains(search_name)]
     if filtered_df.empty:
@@ -84,7 +119,3 @@ if search_name:
             좌표: {row.get('Coordinate', '정보 없음')}  
             ---
             """)
-else:
-    st.info("이름을 입력해 검색하세요.")
-
-print("check check")
