@@ -38,9 +38,7 @@ def load_sheet_data():
         if not values:
             st.error("Google Sheet에서 데이터를 찾을 수 없습니다.")
             return pd.DataFrame()
-
-        df = pd.DataFrame(values[1:], columns=values[0])
-        return df
+        return pd.DataFrame(values[1:], columns=values[0])
     except HttpError as err:
         st.error(f"Google Sheets API 오류: {err}")
         return pd.DataFrame()
@@ -58,10 +56,11 @@ class Complaint:
         Content: {self.content}"""
 
 st.title("북한산 민원 신고 플랫폼")
-
 df = load_sheet_data()
 if df.empty:
     st.stop()
+
+df["Date"] = pd.to_datetime(df.get("Date"), errors="coerce")
 
 st.subheader("사당 위치를 클릭해서 민원 등록")
 map_center = [37.659845, 126.992394]
@@ -92,26 +91,12 @@ if st.button("신고하기"):
     else:
         st.warning("지도의 위치를 클릭하세요.")
 
-for _, row in df.iterrows():
-    try:
-        lat, lon = map(float, row["Coordinate"].strip().split(","))
-        popup = f"{row['Name']} - {row['Civil Complaint']}"
-        folium.Marker([lat, lon], popup=popup).add_to(m)
-    except Exception as e:
-        st.warning(f"좌표 변환 실패: {row['Coordinate']} → {e}")
-
-map_data = st_folium(m, width=700, height=500)
-clicked_coords = map_data.get("last_clicked") if map_data else None
-
-
-df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
-
+st.subheader("민원 검색")
 col1, col2 = st.columns(2)
 with col1:
     search_name = st.text_input("이름으로 검색").strip().lower()
 with col2:
     search_date = st.date_input("날짜로 검색", value=None, key="date_search")
-
 search_date = pd.to_datetime(search_date) if search_date else None
 
 filtered_df = df.copy()
@@ -136,14 +121,11 @@ if search_name or search_date:
 else:
     st.info("이름 또는 날짜 중 하나를 입력하여 검색하세요.")
 
-
-df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
-
-df = df.dropna(subset=["Date"])
-
 st.subheader("날짜별 민원 신고 건수")
-if "Date" in df.columns:
-    complaint_by_day = df["Date"].dt.date.value_counts().sort_index()
+df = df.dropna(subset=["Date"])
+complaint_by_day = df["Date"].dt.date.value_counts().sort_index()
+
+if not complaint_by_day.empty:
     plt.figure(figsize=(10, 4))
     sns.barplot(x=complaint_by_day.index.astype(str), y=complaint_by_day.values, color="salmon")
     plt.xlabel("날짜")
@@ -154,5 +136,6 @@ if "Date" in df.columns:
 else:
     st.warning("날짜 정보가 누락되어 그래프를 표시할 수 없습니다.")
 
+st.subheader("전체 민원 데이터터")
 df.dropna(subset=["Coordinate", "Name", "Civil Complaint"], inplace=True)
 st.dataframe(df)
