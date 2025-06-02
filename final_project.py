@@ -91,6 +91,18 @@ if st.button("신고하기"):
     else:
         st.warning("지도의 위치를 클릭하세요.")
 
+# yaejun part
+for _, row in df.iterrows():
+    try:
+        lat, lon = map(float, row["Coordinate"].strip().split(","))
+        popup = f"{row['Name']} - {row['Civil Complaint']}"
+        folium.Marker([lat, lon], popup=popup).add_to(m)
+    except Exception as e:
+        st.warning(f"좌표 변환 실패: {row['Coordinate']} → {e}")
+
+map_data = st_folium(m, width=700, height=500)
+clicked_coords = map_data.get("last_clicked") if map_data else None
+
 st.subheader("민원 검색")
 col1, col2 = st.columns(2)
 with col1:
