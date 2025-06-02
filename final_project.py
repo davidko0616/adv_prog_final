@@ -101,7 +101,6 @@ for _, row in df.iterrows():
         st.warning(f"좌표 변환 실패: {row['Coordinate']} → {e}")
 
 map_data = st_folium(m, width=700, height=500)
-clicked_coords = map_data.get("last_clicked") if map_data else None
 
 st.subheader("민원 검색")
 col1, col2 = st.columns(2)
@@ -148,6 +147,6 @@ if not complaint_by_day.empty:
 else:
     st.warning("날짜 정보가 누락되어 그래프를 표시할 수 없습니다.")
 
-st.subheader("전체 민원 데이터터")
+st.subheader("전체 민원 데이터")
 df.dropna(subset=["Coordinate", "Name", "Civil Complaint"], inplace=True)
 st.dataframe(df)
