@@ -17,6 +17,26 @@ SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 SPREADSHEET_ID = "1AKHY2-KTT7w16Ah-4S8a0CPVyFxYzoIjGUZIy9fJVTc"
 RANGE_NAME = "Sheet1"
 
+class Complaint:
+    def __init__(self, name: str, date: date, content: str, lat: float, lon: float):
+        self.name = name
+        self.date = date
+        self.content = content
+        self.lat = lat
+        self.lon = lon
+
+    def to_row(self):
+        return [
+            self.name,
+            self.date.strftime("%m/%d/%Y"),
+            self.content,
+            f"{self.lat},{self.lon}"
+        ]
+
+    def to_marker(self):
+        popup = f"{self.name} - {self.content}"
+        return folium.Marker([self.lat, self.lon], popup=popup)
+
 def load_sheet_data():
     creds = None
     if os.path.exists("token.json"):
