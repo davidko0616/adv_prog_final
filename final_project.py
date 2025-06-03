@@ -87,20 +87,24 @@ if df.empty:
 
 df["Date"] = pd.to_datetime(df.get("Date"), errors="coerce")
 
-st.subheader("사당 위치를 클릭해서 민원 등록")
+st.subheader("등록된 민원 위치")
 map_center = [37.659845, 126.992394]
-m = folium.Map(location=map_center, zoom_start=13)
+m1 = folium.Map(location=map_center, zoom_start=13)
 
 for _, row in df.iterrows():
     try:
         lat, lon = map(float, row["Coordinate"].strip().split(","))
         popup = f"{row['Name']} - {row['Civil Complaint']}"
-        folium.Marker([lat, lon], popup=popup).add_to(m)
+        folium.Marker([lat, lon], popup=popup).add_to(m1)
     except Exception as e:
         st.warning(f"좌표 변환 실패: {row['Coordinate']} → {e}")
 
-map_data = st_folium(m, width=700, height=500)
-clicked_coords = map_data.get("last_clicked") if map_data else None
+st_folium(m1, width=700, height=500)
+
+st.subheader("민원 위치 선택")
+m2 = folium.Map(location=map_center, zoom_start=13)
+click_data = st_folium(m2, width=700, height=500)
+clicked_coords = click_data.get("last_clicked") if click_data else None
 
 st.subheader("민원 정보 입력")
 author = st.text_input("작성자")
