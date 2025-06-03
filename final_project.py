@@ -101,7 +101,7 @@ for _, row in df.iterrows():
 
 st_folium(complaint_map, width=700, height=500)
 
-st.subheader("사당 위치를 클릭해서 민원 등록록")
+st.subheader("사당 위치를 클릭해서 민원 등록")
 interactive_map = folium.Map(location=map_center, zoom_start=13)
 interactive_map.add_child(folium.LatLngPopup())
 click_data = st_folium(interactive_map, width=700, height=500)
@@ -131,7 +131,6 @@ if st.button("신고하기"):
         st.warning("지도의 위치를 클릭하세요.")
 
 # yaejun part
-
 map_center = [37.659845, 126.992394]
 m = folium.Map(location=map_center, zoom_start=13)
 
