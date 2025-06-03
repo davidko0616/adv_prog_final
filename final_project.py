@@ -87,26 +87,30 @@ if df.empty:
 
 df["Date"] = pd.to_datetime(df.get("Date"), errors="coerce")
 
-st.subheader("등록된 민원 위치")
+st.subheader("기존 민원 위치")
 map_center = [37.659845, 126.992394]
-m1 = folium.Map(location=map_center, zoom_start=13)
+complaint_map = folium.Map(location=map_center, zoom_start=13)
 
 for _, row in df.iterrows():
     try:
         lat, lon = map(float, row["Coordinate"].strip().split(","))
         popup = f"{row['Name']} - {row['Civil Complaint']}"
-        folium.Marker([lat, lon], popup=popup).add_to(m1)
+        folium.Marker([lat, lon], popup=popup).add_to(display_map)
     except Exception as e:
         st.warning(f"좌표 변환 실패: {row['Coordinate']} → {e}")
 
-st_folium(m1, width=700, height=500)
+st_folium(complaint_map, width=700, height=500)
 
-st.subheader("민원 위치 선택")
-m2 = folium.Map(location=map_center, zoom_start=13)
-click_data = st_folium(m2, width=700, height=500)
+st.subheader("사당 위치를 클릭해서 민원 등록록")
+interactive_map = folium.Map(location=map_center, zoom_start=13)
+interactive_map.add_child(folium.LatLngPopup())
+click_data = st_folium(interactive_map, width=700, height=500)
 clicked_coords = click_data.get("last_clicked") if click_data else None
 
-st.subheader("민원 정보 입력")
+if clicked_coords:
+    st.success(f"선택한 위치: 위도 {clicked_coords['lat']}, 경도 {clicked_coords['lng']}")
+
+st.subheader("민원 정보 입력력")
 author = st.text_input("작성자")
 content = st.text_area("민원 내용")
 submitted_date = st.date_input("작성 날짜", value=date.today())
@@ -127,13 +131,13 @@ if st.button("신고하기"):
         st.warning("지도의 위치를 클릭하세요.")
 
 # yaejun part
-for _, row in df.iterrows():
-    try:
-        lat, lon = map(float, row["Coordinate"].strip().split(","))
-        popup = f"{row['Name']} - {row['Civil Complaint']}"
-        folium.Marker([lat, lon], popup=popup).add_to(m2)
-    except Exception as e:
-        st.warning(f"좌표 변환 실패: {row['Coordinate']} → {e}")
+#for _, row in df.iterrows():
+    #try:
+        #lat, lon = map(float, row["Coordinate"].strip().split(","))
+        #popup = f"{row['Name']} - {row['Civil Complaint']}"
+        #folium.Marker([lat, lon], popup=popup).add_to(m2)
+    #except Exception as e:
+        #st.warning(f"좌표 변환 실패: {row['Coordinate']} → {e}")
 
 map_data = st_folium(m2, width=700, height=500)
 
