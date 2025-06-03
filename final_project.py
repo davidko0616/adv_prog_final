@@ -95,7 +95,7 @@ for _, row in df.iterrows():
     try:
         lat, lon = map(float, row["Coordinate"].strip().split(","))
         popup = f"{row['Name']} - {row['Civil Complaint']}"
-        folium.Marker([lat, lon], popup=popup).add_to(display_map)
+        folium.Marker([lat, lon], popup=popup).add_to(complaint_map)
     except Exception as e:
         st.warning(f"좌표 변환 실패: {row['Coordinate']} → {e}")
 
@@ -139,7 +139,7 @@ if st.button("신고하기"):
     #except Exception as e:
         #st.warning(f"좌표 변환 실패: {row['Coordinate']} → {e}")
 
-map_data = st_folium(m2, width=700, height=500)
+#map_data = st_folium(m2, width=700, height=500)
 
 st.subheader("민원 검색")
 col1, col2 = st.columns(2)
