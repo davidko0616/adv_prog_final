@@ -82,7 +82,7 @@ clicked_coords = st_map.get("last_clicked", None)
 if clicked_coords:
     st.info(f"선택한 위치: 위도 {clicked_coords['lat']:.5f}, 경도 {clicked_coords['lng']:.5f}")
 
-st.subheader("민원 정보 입력력")
+st.subheader("민원 정보 입력")
 author = st.text_input("작성자")
 content = st.text_area("민원 내용")
 submitted_date = st.date_input("작성 날짜", value=date.today())
@@ -96,7 +96,7 @@ if st.button("신고하기"):
         lat, lon = clicked_coords["lat"], clicked_coords["lng"]
         append_to_sheet([
             author,
-            submitted_date.strftime("%Y-%m-%d"),
+            submitted_date.strftime("%m/%d/%Y"),
             content,
             f"{lat},{lon}"
         ])
@@ -106,6 +106,9 @@ if st.button("신고하기"):
 st.subheader("신고된 민원 위치 보기")
 complaint_map = folium.Map(location=map_center, zoom_start=13)
 # yaejun part
+
+
+
 for _, row in df.iterrows():
     try:
         lat, lon = map(float, row["Coordinate"].strip().split(","))
