@@ -29,14 +29,12 @@ def load_sheet_data():
             creds = flow.run_local_server(port=0)
         with open("token.json", "w") as token:
             token.write(creds.to_json())
-    
     try:
         service = build("sheets", "v4", credentials=creds)
         result = service.spreadsheets().values().get(spreadsheetId=SPREADSHEET_ID, range=RANGE_NAME).execute()
         values = result.get("values", [])
 
         if not values:
-            st.error("Google Sheet에서 데이터를 찾을 수 없습니다.")
             return pd.DataFrame()
         return pd.DataFrame(values[1:], columns=values[0])
     except HttpError as err:
@@ -68,29 +66,42 @@ def append_to_sheet(data_row):
     except HttpError as err:
         st.error(f"Google Sheets 저장 오류: {err}")
 
-class Complaint:
-    def __init__(self, author, content, coordinates, submitted_date):
-        self.author = author
-        self.content = content
-        self.coordinates = coordinates
-        self.submitted_date = submitted_date
-
-    def __str__(self):
-        return f""" Complaint by {self.author} on {self.submitted_date}:
-        Location: {self.coordinates}
-        Content: {self.content}"""
-
 st.title("북한산 민원 신고 플랫폼")
 df = load_sheet_data()
-if df.empty:
-    st.stop()
 
-df["Date"] = pd.to_datetime(df.get("Date"), errors="coerce")
+if not df.empty:
+    df["Date"] = pd.to_datetime(df.get("Date"), errors="coerce")
 
 st.subheader("기존 민원 위치")
 map_center = [37.659845, 126.992394]
-complaint_map = folium.Map(location=map_center, zoom_start=13)
+interactive_map = folium.Map(location=map_center, zoom_start=13)
+st_map = st_folium(interactive_map, width=700, height=450)
+clicked_coords = st_map.get("last_clicked")
 
+st.subheader("민원 정보 입력력")
+author = st.text_input("작성자")
+content = st.text_area("민원 내용")
+submitted_date = st.date_input("작성 날짜", value=date.today())
+
+if st.button("신고하기"):
+    if not author or not content:
+        st.warning("작성자와 민원 내용을 모두 입력하세요.")
+    elif not clicked_coords:
+        st.warning("지도의 위치를 클릭하여 좌표를 선택하세요.")
+    else:
+        lat, lon = clicked_coords["lat"], clicked_coords["lng"]
+        append_to_sheet([
+            author,
+            submitted_date.strftime("%Y-%m-%d"),
+            content,
+            f"{lat},{lon}"
+        ])
+        st.success("민원이 성공적으로 저장되었습니다!")
+        st.experimental_rerun()
+
+st.subheader("신고된 민원 위치 보기")
+complaint_map = folium.Map(location=map_center, zoom_start=13)
+# yaejun part
 for _, row in df.iterrows():
     try:
         lat, lon = map(float, row["Coordinate"].strip().split(","))
@@ -100,46 +111,6 @@ for _, row in df.iterrows():
         st.warning(f"좌표 변환 실패: {row['Coordinate']} → {e}")
 
 st_folium(complaint_map, width=700, height=500)
-
-st.subheader("사당 위치를 클릭해서 민원 등록록")
-interactive_map = folium.Map(location=map_center, zoom_start=13)
-interactive_map.add_child(folium.LatLngPopup())
-click_data = st_folium(interactive_map, width=700, height=500)
-clicked_coords = click_data.get("last_clicked") if click_data else None
-
-if clicked_coords:
-    st.success(f"선택한 위치: 위도 {clicked_coords['lat']}, 경도 {clicked_coords['lng']}")
-
-st.subheader("민원 정보 입력력")
-author = st.text_input("작성자")
-content = st.text_area("민원 내용")
-submitted_date = st.date_input("작성 날짜", value=date.today())
-
-if st.button("신고하기"):
-    if clicked_coords:
-        lat, lon = clicked_coords["lat"], clicked_coords["lng"]
-        complaint = Complaint(author, content, (lat, lon), submitted_date)
-        append_to_sheet([
-            author,
-            submitted_date.strftime("%Y-%m-%d"),
-            content,
-            f"{lat},{lon}"
-        ])
-        st.success("민원이 성공적으로 저장되었습니다!")
-        st.text(str(complaint))
-    else:
-        st.warning("지도의 위치를 클릭하세요.")
-
-# yaejun part
-#for _, row in df.iterrows():
-    #try:
-        #lat, lon = map(float, row["Coordinate"].strip().split(","))
-        #popup = f"{row['Name']} - {row['Civil Complaint']}"
-        #folium.Marker([lat, lon], popup=popup).add_to(m2)
-    #except Exception as e:
-        #st.warning(f"좌표 변환 실패: {row['Coordinate']} → {e}")
-
-#map_data = st_folium(m2, width=700, height=500)
 
 st.subheader("민원 검색")
 col1, col2 = st.columns(2)
