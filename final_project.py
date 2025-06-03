@@ -75,8 +75,12 @@ if not df.empty:
 st.subheader("기존 민원 위치")
 map_center = [37.659845, 126.992394]
 interactive_map = folium.Map(location=map_center, zoom_start=13)
+interactive_map.add_child(folium.LatLngPopup())
 st_map = st_folium(interactive_map, width=700, height=450)
-clicked_coords = st_map.get("last_clicked")
+clicked_coords = st_map.get("last_clicked", None)
+
+if clicked_coords:
+    st.info(f"선택한 위치: 위도 {clicked_coords['lat']:.5f}, 경도 {clicked_coords['lng']:.5f}")
 
 st.subheader("민원 정보 입력력")
 author = st.text_input("작성자")
