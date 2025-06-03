@@ -131,15 +131,19 @@ if st.button("신고하기"):
         st.warning("지도의 위치를 클릭하세요.")
 
 # yaejun part
-#for _, row in df.iterrows():
-    #try:
-        #lat, lon = map(float, row["Coordinate"].strip().split(","))
-        #popup = f"{row['Name']} - {row['Civil Complaint']}"
-        #folium.Marker([lat, lon], popup=popup).add_to(m2)
-    #except Exception as e:
-        #st.warning(f"좌표 변환 실패: {row['Coordinate']} → {e}")
 
-#map_data = st_folium(m2, width=700, height=500)
+map_center = [37.659845, 126.992394]
+m = folium.Map(location=map_center, zoom_start=13)
+
+for _, row in df.iterrows():
+    try:
+        lat, lon = map(float, row["Coordinate"].strip().split(","))
+        popup = f"{row['Name']} - {row['Civil Complaint']}"
+        folium.Marker([lat, lon], popup=popup).add_to(m)
+    except Exception as e:
+        st.warning(f"좌표 변환 실패: {row['Coordinate']} → {e}")
+
+map_data = st_folium(m, width=700, height=500)
 
 st.subheader("민원 검색")
 col1, col2 = st.columns(2)
