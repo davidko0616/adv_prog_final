@@ -108,18 +108,19 @@ content = st.text_area("민원 내용")
 submitted_date = st.date_input("작성 날짜", value=date.today())
 
 if st.button("신고하기"):
-    if not author or not content:
-        st.warning("작성자와 민원 내용을 입력하세요.")
-    elif not clicked_coords:
-        st.warning("지도의 위치를 클릭하세요.")
-    else:
+    if clicked_coords:
         lat, lon = clicked_coords["lat"], clicked_coords["lng"]
-        coordinates = f"{lat},{lon}"
-        complaint = Complaint(author, content, coordinates, submitted_date)
-        # Save to Google Sheet
-        append_to_sheet([author, content, coordinates, submitted_date.strftime("%Y-%m-%d")])
+        complaint = Complaint(author, content, (lat, lon), submitted_date)
+        append_to_sheet([
+            author,
+            submitted_date.strftime("%Y-%m-%d"),
+            content,
+            f"{lat},{lon}"
+        ])
         st.success("민원이 성공적으로 저장되었습니다!")
         st.text(str(complaint))
+    else:
+        st.warning("지도의 위치를 클릭하세요.")
 
 # yaejun part
 for _, row in df.iterrows():
