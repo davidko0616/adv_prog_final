@@ -101,7 +101,7 @@ if st.button("신고하기"):
             f"{lat},{lon}"
         ])
         st.success("민원이 성공적으로 저장되었습니다!")
-        st.experimental_rerun()
+        st.rerun()
 
 st.subheader("신고된 민원 위치 보기")
 complaint_map = folium.Map(location=map_center, zoom_start=13)
