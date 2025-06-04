@@ -37,30 +37,6 @@ class Complaint:
         popup = f"{self.name} - {self.content}"
         return folium.Marker([self.lat, self.lon], popup=popup)
 
-def load_sheet_data():
-    creds = None
-    if os.path.exists("token.json"):
-        creds = Credentials.from_authorized_user_file("token.json", SCOPES)
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file("credentials.json", SCOPES)
-            creds = flow.run_local_server(port=0)
-        with open("token.json", "w") as token:
-            token.write(creds.to_json())
-    try:
-        service = build("sheets", "v4", credentials=creds)
-        result = service.spreadsheets().values().get(spreadsheetId=SPREADSHEET_ID, range=RANGE_NAME).execute()
-        values = result.get("values", [])
-
-        if not values:
-            return pd.DataFrame()
-        return pd.DataFrame(values[1:], columns=values[0])
-    except HttpError as err:
-        st.error(f"Google Sheets API 오류: {err}")
-        return pd.DataFrame()
-
 def append_to_sheet(data_row):
     try:
         creds = None
@@ -87,10 +63,6 @@ def append_to_sheet(data_row):
         st.error(f"Google Sheets 저장 오류: {err}")
 
 st.title("북한산 민원 신고 플랫폼")
-df = load_sheet_data()
-
-if not df.empty:
-    df["Date"] = pd.to_datetime(df.get("Date"), errors="coerce")
 
 st.subheader("기존 민원 위치")
 map_center = [37.659845, 126.992394]
@@ -125,65 +97,3 @@ if st.button("신고하기"):
 
 st.subheader("신고된 민원 위치 보기")
 complaint_map = folium.Map(location=map_center, zoom_start=13)
-# yaejun part
-
-
-
-for _, row in df.iterrows():
-    try:
-        lat, lon = map(float, row["Coordinate"].strip().split(","))
-        popup = f"{row['Name']} - {row['Civil Complaint']}"
-        folium.Marker([lat, lon], popup=popup).add_to(complaint_map)
-    except Exception as e:
-        st.warning(f"좌표 변환 실패: {row['Coordinate']} → {e}")
-
-st_folium(complaint_map, width=700, height=500)
-
-st.subheader("민원 검색")
-col1, col2 = st.columns(2)
-with col1:
-    search_name = st.text_input("이름으로 검색").strip().lower()
-with col2:
-    search_date = st.date_input("날짜로 검색", value=None, key="date_search")
-search_date = pd.to_datetime(search_date) if search_date else None
-
-filtered_df = df.copy()
-if search_name:
-    filtered_df = filtered_df[filtered_df["Name"].str.lower().str.contains(search_name)]
-if search_date:
-    filtered_df = filtered_df[filtered_df["Date"].dt.date == search_date.date()]
-
-if search_name or search_date:
-    if filtered_df.empty:
-        st.warning("검색 조건에 해당하는 데이터가 없습니다.")
-    else:
-        st.subheader("검색 결과")
-        for _, row in filtered_df.iterrows():
-            st.markdown(f"""
-            이름: {row['Name']}  
-            날짜: {row.get('Date', '정보 없음')}  
-            신고 내용: {row.get('Civil Complaint', '정보 없음')}  
-            좌표: {row.get('Coordinate', '정보 없음')}  
-            ---  
-            """)
-else:
-    st.info("이름 또는 날짜 중 하나를 입력하여 검색하세요.")
-
-st.subheader("날짜별 민원 신고 건수")
-df = df.dropna(subset=["Date"])
-complaint_by_day = df["Date"].dt.date.value_counts().sort_index()
-
-if not complaint_by_day.empty:
-    plt.figure(figsize=(10, 4))
-    sns.barplot(x=complaint_by_day.index.astype(str), y=complaint_by_day.values, color="salmon")
-    plt.xlabel("날짜")
-    plt.ylabel("민원 건수")
-    plt.xticks(rotation=45)
-    plt.tight_layout()
-    st.pyplot(plt)
-else:
-    st.warning("날짜 정보가 누락되어 그래프를 표시할 수 없습니다.")
-
-st.subheader("전체 민원 데이터")
-df.dropna(subset=["Coordinate", "Name", "Civil Complaint"], inplace=True)
-st.dataframe(df)
