@@ -47,7 +47,7 @@ class ComplaintManager:
 
     def render_map_input(self):
         st.subheader("민원 위치 선택")
-        interactive_map = folium.Map(location=self.map_center, zoom_start=13)
+        interactive_map = folium.Map(location=self.map_center, zoom_start=12)
         interactive_map.add_child(folium.LatLngPopup())
         st_map = st_folium(interactive_map, width=700, height=450)
         clicked_coords = st_map.get("last_clicked", None)
@@ -76,5 +76,7 @@ class ComplaintManager:
                     content,
                     f"{lat},{lon}"
                 ])
-        st.success("민원이 성공적으로 저장되었습니다!")
-        st.rerun()
+                st.session_state['success_message'] = "민원이 성공적으로 저장되었습니다!"
+
+        if 'success_message' in st.session_state:
+            st.success(st.session_state['success_message'])

@@ -58,14 +58,34 @@ class ReportViewer:
 
     def display_complaint_map(self):
         st.subheader("신고된 민원 위치 보기")
-        complaint_map = folium.Map(location=self.map_center, zoom_start=13)
+        
+        complaint_map = folium.Map(location=self.map_center, zoom_start=12)
+
+        fire_keywords = ['fire', 'burn']
+
         for _, row in self.df.iterrows():
             try:
                 lat, lon = map(float, row["Coordinate"].strip().split(","))
-                popup = f"{row['Name']} - {row['Civil Complaint']}"
-                folium.Marker([lat, lon], popup=popup).add_to(complaint_map)
+                name = row['Name']
+                complaint = row['Civil Complaint']
+
+                popup_text = f"<b>{name}</b><br>{complaint}"
+
+                color = "green"
+                for keyword in fire_keywords:
+                    if keyword.lower() in complaint.lower():
+                        color = "red"
+                        break
+
+                folium.Marker(
+                    location=[lat, lon],
+                    popup=folium.Popup(popup_text, max_width=300),
+                    icon=folium.Icon(color=color, icon="info-sign")
+                ).add_to(complaint_map)
+
             except Exception as e:
                 st.warning(f"좌표 변환 실패: {row['Coordinate']} → {e}")
+
         st_folium(complaint_map, width=700, height=500)
 
     def search_section(self):
