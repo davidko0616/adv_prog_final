@@ -1,17 +1,13 @@
-import streamlit as st
-import pandas as pd
-import folium
 import os
-from streamlit_folium import st_folium
-import matplotlib.pyplot as plt
-import seaborn as sns
+import streamlit as st
 from datetime import date
-
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+import folium
+from streamlit_folium import st_folium
 
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 SPREADSHEET_ID = "1AKHY2-KTT7w16Ah-4S8a0CPVyFxYzoIjGUZIy9fJVTc"
@@ -82,6 +78,3 @@ class ComplaintManager:
                 ])
         st.success("민원이 성공적으로 저장되었습니다!")
         st.rerun()
-
-st.subheader("신고된 민원 위치 보기")
-complaint_map = folium.Map(location=map_center, zoom_start=13)
