@@ -80,3 +80,66 @@ class ComplaintManager:
 
         if 'success_message' in st.session_state:
             st.success(st.session_state['success_message'])
+            
+    def display_facility_map(self):
+        st.subheader("주변 경찰서 및 소방서 위치")
+
+        facility_map = folium.Map(location=self.map_center, zoom_start=12)
+
+        police_stations = [
+            {"name": "서울은평경찰서", "coords": [37.628283, 126.928576], "phone": "02-350-1324"},
+            {"name": "서울은평경찰서 불광지구대", "coords": [37.621394, 126.926586], "phone": "02-385-9901"},
+            {"name": "은평경찰서 연신내지구대", "coords": [37.615259, 126.912701], "phone": "02-350-1936"},
+            {"name": "녹번파출소", "coords": [37.608834, 126.931852], "phone": "02-355-7112"},
+            {"name": "서울서부경찰서", "coords": [37.602172, 126.921207], "phone": "02-335-9324"},
+            {"name": "구기치안센터", "coords": [37.609558, 126.956385], "phone": "02-379-4575"},
+            {"name": "서대문경찰서 홍은지구대", "coords": [37.595247, 126.946391], "phone": "02-3216-2335"},
+            {"name": "정릉파출소", "coords": [37.616060, 127.008610], "phone": "02-920-1840"},
+            {"name": "수유6치안센터", "coords": [37.644213, 127.015761], "phone": "02-995-9349"},
+            {"name": "효자치안센터", "coords": [37.662026, 126.949243], "phone": "02-386-9561"},
+            {"name": "북한산국립공원 특수산악구조대", "coords": [37.661270, 126.985093], "phone": "02-996-5306"},
+            {"name": "서울경찰청802의무경찰대", "coords": [37.678546, 127.002293], "phone": "02-907-0550"},
+            {"name": "의정부경찰서 호원지구대", "coords": [37.706011, 127.047858], "phone": "031-872-3425"},
+            {"name": "가능지구대", "coords": [37.743398, 127.033951], "phone": "031-873-2676"},
+            {"name": "부곡1리 자율방범대", "coords": [37.735401, 126.977392], "phone": "031-826-1112"},
+            {"name": "장흥파출소", "coords": [37.716913, 126.940857], "phone": "031-855-5112"},
+            {"name": "고양경찰서 고양파출소", "coords": [37.703420, 126.903967], "phone": "031-962-9112"}
+        ]
+
+        fire_stations = [
+            {"name": "신영119안전센터", "coords": [37.605724, 126.960825], "phone": "02-391-0119"},
+            {"name": "홍은119안전센터", "coords": [37.598715, 126.947020], "phone": "02-6981-5549"},
+            {"name": "녹번119안전센터", "coords": [37.601088, 126.935067], "phone": "02-354-0119"},
+            {"name": "삼각산119안전센터", "coords": [37.619927, 127.015545], "phone": "119"},
+            {"name": "우이119안전센터", "coords": [37.640891, 127.016478], "phone": "02-904-0119"},
+            {"name": "도봉소방서", "coords": [37.664118, 127.043045], "phone": "02-6981-8000"},
+            {"name": "도봉119안전센터", "coords": [37.687572, 127.040911], "phone": "02-6981-8182"},
+            {"name": "흥선119안전센터", "coords": [37.737062, 127.035250], "phone": "031-849-7501"},
+            {"name": "장흥119지역대", "coords": [37.717949, 126.941345], "phone": "031-855-0119"},
+            {"name": "은평소방서", "coords": [37.628600, 126.919772], "phone": "02-389-6119"},
+            {"name": "경기도제2소방재난본부", "coords": [37.731409, 127.044048], "phone": "031-849-2960"}
+        ]
+
+        for station in police_stations:
+            popup_text = f"""
+            <b>{station['name']}</b><br>
+            {station['phone']}
+            """
+            folium.Marker(
+                location=station["coords"],
+                popup=folium.Popup(popup_text, max_width=200),
+                icon=folium.Icon(color="blue", icon="glyphicon glyphicon-star")
+            ).add_to(facility_map)
+
+        for station in fire_stations:
+            popup_text = f"""
+            <b>{station['name']}</b><br>
+            {station['phone']}
+            """
+            folium.Marker(
+                location=station["coords"],
+                popup=folium.Popup(popup_text, max_width=200),
+                icon=folium.Icon(color="red", icon="fire")
+            ).add_to(facility_map)
+
+        st_folium(facility_map, width=700, height=500)
