@@ -13,6 +13,23 @@ SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 SPREADSHEET_ID = "1AKHY2-KTT7w16Ah-4S8a0CPVyFxYzoIjGUZIy9fJVTc"
 RANGE_NAME = "Sheet1"
 
+class Complaint:
+    def __init__(self, author, content, submitted_date, lat, lon):
+        self.author = author
+        self.content = content
+        self.submitted_date = submitted_date
+        self.lat = lat
+        self.lon = lon
+
+    def __str__(self):
+        return (
+            f"민원 정보\n"
+            f"작성자: {self.author}\n"
+            f"작성일: {self.submitted_date.strftime('%Y-%m-%d')}\n"
+            f"내용: {self.content}\n"
+            f"좌표: 위도 {self.lat:.5f}, 경도 {self.lon:.5f}"
+        )
+
 class ComplaintManager:
     def __init__(self):
         self.map_center = [37.659845, 126.992394]
@@ -59,7 +76,6 @@ class ComplaintManager:
         author = st.text_input("작성자")
         content = st.text_area("민원 내용")
         submitted_date = st.date_input("작성 날짜", value=date.today())
-
         return author, content, submitted_date
 
     def handle_submission(self, author, content, submitted_date, clicked_coords):
@@ -70,12 +86,16 @@ class ComplaintManager:
                 st.warning("지도의 위치를 클릭하여 좌표를 선택하세요.")
             else:
                 lat, lon = clicked_coords["lat"], clicked_coords["lng"]
+                complaint = Complaint(author, content,submitted_date, lat, lon)
+
                 self.append_to_sheet([
-                    author,
-                    submitted_date.strftime("%m/%d/%Y"),
-                    content,
-                    f"{lat},{lon}"
+                    complaint.author,
+                    complaint.submitted_date.strftime("%m/%d/%Y"),
+                    complaint.content,
+                    f"{complaint.lat},{complaint.lon}"
                 ])
+                
+                st.text(str(complaint))
                 st.session_state['success_message'] = "민원이 성공적으로 저장되었습니다!"
 
         if 'success_message' in st.session_state:
